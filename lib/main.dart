@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:background_fetch/background_fetch.dart';
+import 'package:path_provider/path_provider.dart';
 
 /*Opened a new branch with Git... here I am combining both.. localRW of files and BackgroundFetch... both these projects were
 * originally made in helsinki by me on Lenovoe and push to GIT... but on my COmp im gona combine both and move ahead...
@@ -28,7 +30,7 @@ void backgroundFetchHeadlessTask(HeadlessTask task) async {
 }
 
 void main() {
-  runApp(new MyApp());
+  runApp(MyApp());
 
   // Register to receive BackgroundFetch events after app is terminated.
   // Requires {stopOnTerminate: false, enableHeadless: true}
@@ -37,7 +39,7 @@ void main() {
 
 class MyApp extends StatefulWidget {
   @override
-  _MyAppState createState() => new _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
@@ -69,9 +71,12 @@ class _MyAppState extends State<MyApp> {
       print("[BackgroundFetch] Event received $taskId");
       count++;
       setState(() {
-        _events.insert(0, new DateTime.now());
+        _events.insert(0, DateTime.now());
       });
       print("At taskCALLBACK $count.... $_events[0]");
+      await theJob();
+
+
       // IMPORTANT:  You must signal completion of your task or the OS can punish your app
       // for taking too long in the background.
       BackgroundFetch.finish(taskId);
@@ -120,8 +125,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: new Scaffold(
-        appBar: new AppBar(
+      home: Scaffold(
+        appBar: AppBar(
             title: const Text('BackgroundFetch Example', style: TextStyle(color: Colors.black)),
             backgroundColor: Colors.amberAccent,
             brightness: Brightness.light,
@@ -131,7 +136,7 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Container(
           color: Colors.black,
-          child: new ListView.builder(
+          child: ListView.builder(
               itemCount: _events.length,
               itemBuilder: (BuildContext context, int index) {
                 DateTime timestamp = _events[index];
@@ -141,7 +146,7 @@ class _MyAppState extends State<MyApp> {
                         labelStyle: TextStyle(color: Colors.amberAccent, fontSize: 20.0),
                         labelText: "[background fetch event]"
                     ),
-                    child: new Text(timestamp.toString(), style: TextStyle(color: Colors.white, fontSize: 16.0))
+                    child: Text(timestamp.toString(), style: TextStyle(color: Colors.white, fontSize: 16.0))
                 );
               }
           ),
@@ -150,11 +155,40 @@ class _MyAppState extends State<MyApp> {
             child: Row(
                 children: <Widget>[
                   RaisedButton(onPressed: _onClickStatus, child: Text('Status')),
-                  Container(child: Text("$_status"), margin: EdgeInsets.only(left: 20.0))
+                  Container(child: Text("$_status"), margin: EdgeInsets.only(left: 20.0)),
+                  ElevatedButton(onPressed: readFile , child: Text("ReadFile"))
                 ]
             )
         ),
       ),
     );
   }
+
+  theJob() async {
+    String fileName = "myFile.txt";
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    String savePath = '$dir/$fileName';
+    File file = File(savePath);
+
+    //for a directory: await Directory(savePath).exists();
+    if (await file.exists()) {
+      print("File exists.... so Update");
+      file.writeAsString("$count.... $_events[0]", mode:FileMode.append);
+    } else {
+      print("File don't exists... so 1st time Save!");
+      file.writeAsString("$count.... $_events[0]");
+    }
+  }
+
+  void readFile() async {
+    String fileName = "myFile.txt";
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    String savePath = '$dir/$fileName';
+    File file = File(savePath);
+
+    String fileContent = await file.readAsString();
+    print('File Content: $fileContent');
+  }
+
+
 }
