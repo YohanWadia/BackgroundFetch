@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -52,13 +53,14 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+    _events.insert(0, DateTime.now());
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
     // Configure BackgroundFetch.
     int status = await BackgroundFetch.configure(BackgroundFetchConfig(
-        minimumFetchInterval: 15,
+        minimumFetchInterval: 60,
         stopOnTerminate: false,
         enableHeadless: true,
         requiresBatteryNotLow: false,
@@ -156,7 +158,8 @@ class _MyAppState extends State<MyApp> {
                 children: <Widget>[
                   RaisedButton(onPressed: _onClickStatus, child: Text('Status')),
                   Container(child: Text("$_status"), margin: EdgeInsets.only(left: 20.0)),
-                  ElevatedButton(onPressed: readFile , child: Text("ReadFile"))
+                  ElevatedButton(onPressed: readFile , child: Text("ReadFile")),
+                  ElevatedButton(onPressed: readFile , child: Text("ExStg"))
                 ]
             )
         ),
@@ -172,11 +175,13 @@ class _MyAppState extends State<MyApp> {
 
     //for a directory: await Directory(savePath).exists();
     if (await file.exists()) {
-      print("File exists.... so Update");
-      file.writeAsString("$count.... $_events[0]", mode:FileMode.append);
+      print("File exists.... so Update|| $savePath");
+      final diff = _events[0].difference(_events[1]).inMinutes ;
+      file.writeAsString("$count. ${_events[0]} / ($diff) \n", mode:FileMode.append);
     } else {
       print("File don't exists... so 1st time Save!");
-      file.writeAsString("$count.... $_events[0]");
+      final diff = _events[0].difference(_events[1]).inMinutes ;
+      file.writeAsString("$count. ${_events[0]} / ($diff) \n");
     }
   }
 
